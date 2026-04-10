@@ -183,16 +183,23 @@ export default function Dashboard() {
   /* ─── STATUS MENU ─── */
   const openStMenu = (taskId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     setStMenuTarget(taskId);
     setStMenuPos({ top: rect.bottom + 4, left: rect.left });
   };
 
   useEffect(() => {
-    const close = () => { setStMenuTarget(null); setStMenuPos(null); };
+    const close = (e: MouseEvent) => {
+      if (!stMenuTarget) return;
+      const menu = document.querySelector('.st-menu');
+      if (menu && menu.contains(e.target as Node)) return;
+      setStMenuTarget(null);
+      setStMenuPos(null);
+    };
     document.addEventListener('click', close);
     return () => document.removeEventListener('click', close);
-  }, []);
+  }, [stMenuTarget]);
 
   const catsToShow = activeCat === 'all' ? categories : categories.filter(c => c.id === activeCat);
 
@@ -201,7 +208,7 @@ export default function Dashboard() {
       <div className="shell">
         {/* HEADER */}
         <header className="hdr">
-          <div className="hdr-emblem">A</div>
+          <img className="hdr-emblem" src="/logo.jpg" alt="ARD" />
           <div className="hdr-wordmark">
             <div className="hdr-title">RUDA Execution OS</div>
             <div className="hdr-sub">ARD Pvt Ltd &middot; War Room Sprint</div>

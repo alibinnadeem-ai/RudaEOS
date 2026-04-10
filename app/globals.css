@@ -69,10 +69,12 @@ body{font-family:var(--georgia);background:var(--bg);color:var(--text);font-size
   position:sticky;top:0;z-index:100;
 }
 .hdr-emblem{
-  width:36px;height:36px;border:1.5px solid rgba(255,255,255,.4);
-  border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-family:var(--georgia);font-style:italic;font-size:14px;font-weight:400;
-  color:rgba(255,255,255,.9);flex-shrink:0;letter-spacing:.02em;
+  height:36px;
+  width:auto;
+  max-width:120px;
+  display:block;
+  flex-shrink:0;
+  object-fit:contain;
 }
 .hdr-wordmark{display:flex;flex-direction:column;gap:0;}
 .hdr-title{font-family:var(--georgia);font-size:17px;font-weight:400;font-style:italic;letter-spacing:.01em;color:#fff;line-height:1.1;}
@@ -540,4 +542,73 @@ body{font-family:var(--georgia);background:var(--bg);color:var(--text);font-size
   .paper { box-shadow: none; padding: 20px; }
   .body { overflow: visible; }
   .main { overflow: visible; }
+}
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 768px) {
+  /* Header */
+  .hdr { padding: 0 12px; gap: 10px; height: 52px; }
+  .hdr-emblem { height: 30px; width: auto; max-width: 96px; }
+  .hdr-title { font-size: 14px; }
+  .hdr-sub { display: none; }
+  .hdr-divider { display: none; }
+  .hb-sprint, .hb-ruda { display: none; }
+  .hdr-clock { display: none; }
+
+  /* KPI strip */
+  .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+  .kpi-cell:nth-child(4), .kpi-cell:nth-child(5) { border-top: 1px solid var(--border); }
+  .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+  .kpi-num { font-size: 24px; }
+  .kpi-cell { padding: 12px 14px; }
+
+  /* Hide sidebar */
+  .sidebar { display: none; }
+
+  /* Toolbar */
+  .toolbar { padding: 8px 12px; gap: 8px; }
+  .tb-count { display: none; }
+
+  /* Sections */
+  .sections-wrap { padding: 10px 10px 20px; gap: 10px; }
+
+  /* Category header */
+  .cat-hdr { padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
+  .cat-prog-track { width: 60px; }
+  .cat-add { display: none; }
+
+  /* Task card — stack vertically */
+  .task-card {
+    grid-template-columns: 1fr;
+  }
+  .tc-left {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Right meta panel — 2-column grid on mobile for consistent width */
+  .tc-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .tc-meta-row {
+    padding: 8px 12px;
+    border-right: 1px solid var(--border);
+  }
+  .tc-meta-row:nth-child(even) { border-right: none; }
+  .tc-meta-row:last-child,
+  .tc-meta-row:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+
+  /* Modal */
+  .modal { padding: 20px; }
+  .form-row-2 { grid-template-columns: 1fr; }
+
+  /* Print preview */
+  .preview-view { padding: 16px 10px; }
+  .paper { padding: 24px 20px; }
+  .pp-masthead { flex-direction: column; gap: 12px; }
+  .pp-meta-block { text-align: left; }
+  .pp-kpi-row { grid-template-columns: repeat(3, 1fr); }
+  .pp-task { grid-template-columns: 1fr; }
+  .pp-task-left { border-right: none; border-bottom: 1px solid var(--border); }
 }
