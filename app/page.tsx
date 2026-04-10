@@ -25,6 +25,16 @@ function getProgress(t: Task) {
   return Math.round(cl.filter(c => c.checked).length / cl.length * 100);
 }
 
+function getKpi(tasks: Task[]) {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status === 'CP').length;
+  const bl = tasks.filter(t => t.status === 'BL').length;
+  const ip = tasks.filter(t => t.status === 'IP').length;
+  const prog = tasks.length ? Math.round(tasks.reduce((s, t) => s + getProgress(t), 0) / tasks.length) : 0;
+
+  return { total, done, bl, ip, prog };
+}
+
 export default function Dashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -54,8 +64,13 @@ export default function Dashboard() {
   const fetchAll = useCallback(async () => {
     const res = await fetch('/api/tasks');
     const data = await res.json();
+    const nextTasks = (data.tasks || []).map((t: any) => ({
+      ...t,
+      checklist: (t.checklist || []).map((item: any) => ({ ...item })),
+    }));
+
     setCategories(data.categories || []);
-    setTasks((data.tasks || []).map((t: any) => ({ ...t, checklist: t.checklist || [] })));
+    setTasks(nextTasks);
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -79,11 +94,7 @@ export default function Dashboard() {
   };
 
   /* ─── KPIs ─── */
-  const total = tasks.length;
-  const done = tasks.filter(t => t.status === 'CP').length;
-  const bl = tasks.filter(t => t.status === 'BL').length;
-  const ip = tasks.filter(t => t.status === 'IP').length;
-  const prog = tasks.length ? Math.round(tasks.reduce((s, t) => s + getProgress(t), 0) / tasks.length) : 0;
+  const { total, done, bl, ip, prog } = getKpi(tasks);
 
   /* ─── FILTER ─── */
   const filteredTasks = tasks.filter(t => {
@@ -98,13 +109,14 @@ export default function Dashboard() {
 
   /* ─── API CALLS ─── */
   const updateTask = async (id: number, fields: Record<string, string>) => {
+    setTasks(prev => prev.map(task => task.id === id ? { ...task, ...fields } : task));
     await fetch(`/api/tasks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) });
   };
 
   const deleteTask = async (id: number) => {
     if (!confirm('Delete this task?')) return;
+    setTasks(prev => prev.filter(task => task.id !== id));
     await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-    fetchAll();
     toast('Task deleted', 'r');
   };
 
@@ -470,7 +482,15 @@ function ChecklistAddRow({ taskId, onAdd }: { taskId: number; onAdd: (taskId: nu
   );
 }
 
-function PrintPreview({ categories, tasks, kpi }: { categories: Category[]; tasks: Task[]; kpi: { total: number; done: number; bl: number; ip: number; prog: number } }) {
+function PrintPreview({
+  categories,
+  tasks,
+  kpi,
+}: {
+  categories: Category[];
+  tasks: Task[];
+  kpi: { total: number; done: number; bl: number; ip: number; prog: number };
+}) {
   const { total, done, bl, ip, prog } = kpi;
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
