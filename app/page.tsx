@@ -335,7 +335,7 @@ export default function Dashboard() {
                             {catTasks.map(task => {
                               const p = getProgress(task);
                               return (
-                                <div className="task-card" key={task.id}>
+                                <div className="task-card" key={task.id} style={{ '--task-accent': cat.color } as React.CSSProperties}>
                                   <div className="tc-left">
                                     <div className="tc-header">
                                       <input
