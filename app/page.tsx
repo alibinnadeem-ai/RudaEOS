@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 
 /* ─── TYPES ─── */
 interface Category { id: string; label: string; color: string; light: string; }
@@ -10,6 +11,7 @@ interface Task {
   checklist: ClItem[];
 }
 interface Toast { id: number; msg: string; type: string; out: boolean; }
+interface TasksResponse { categories?: Category[]; tasks?: Task[]; }
 
 const SL: Record<string, { l: string; c: string }> = {
   NS: { l: 'Not started', c: 's-NS' },
@@ -61,19 +63,28 @@ export default function Dashboard() {
   const fDeadline = useRef<HTMLInputElement>(null);
 
   /* ─── FETCH ─── */
-  const fetchAll = useCallback(async () => {
-    const res = await fetch('/api/tasks');
-    const data = await res.json();
-    const nextTasks = (data.tasks || []).map((t: any) => ({
-      ...t,
-      checklist: (t.checklist || []).map((item: any) => ({ ...item })),
-    }));
+  useEffect(() => {
+    let cancelled = false;
 
-    setCategories(data.categories || []);
-    setTasks(nextTasks);
+    const loadTasks = async () => {
+      const res = await fetch('/api/tasks');
+      const data = (await res.json()) as TasksResponse;
+      const nextTasks = (data.tasks || []).map(task => ({
+        ...task,
+        checklist: (task.checklist || []).map(item => ({ ...item })),
+      }));
+
+      if (cancelled) return;
+      setCategories(data.categories || []);
+      setTasks(nextTasks);
+    };
+
+    void loadTasks();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   /* ─── CLOCK ─── */
   useEffect(() => {
@@ -220,7 +231,7 @@ export default function Dashboard() {
       <div className="shell">
         {/* HEADER */}
         <header className="hdr">
-          <img className="hdr-emblem" src="/logo.jpg" alt="ARD" />
+          <Image className="hdr-emblem" src="/logo.jpg" alt="ARD" width={120} height={56} priority />
           <div className="hdr-wordmark">
             <div className="hdr-title">RUDA Execution OS</div>
             <div className="hdr-sub">ARD Pvt Ltd &middot; War Room Sprint</div>
@@ -292,7 +303,7 @@ export default function Dashboard() {
 
               <div className="sections-wrap">
                 {catsToShow.every(cat => !filteredTasks.some(t => t.cat_id === cat.id)) ? (
-                  <div className="empty-state">// No tasks match your filters.</div>
+                  <div className="empty-state">{'// No tasks match your filters.'}</div>
                 ) : (
                   catsToShow.map((cat, ci) => {
                     const catTasks = filteredTasks.filter(t => t.cat_id === cat.id);
@@ -303,7 +314,12 @@ export default function Dashboard() {
                     return (
                       <div className="cat-block" key={cat.id} style={{ animationDelay: `${ci * 0.05}s` }}>
                         <div className="cat-hdr" onClick={() => {
-                          setCollapsed(prev => { const n = new Set(prev); isCol ? n.delete(cat.id) : n.add(cat.id); return n; });
+                          setCollapsed(prev => {
+                            const n = new Set(prev);
+                            if (isCol) n.delete(cat.id);
+                            else n.add(cat.id);
+                            return n;
+                          });
                         }}>
                           <div className="cat-accent-bar" style={{ background: cat.color }} />
                           <div className="cat-name" style={{ color: cat.color }}>{cat.label}</div>
@@ -333,7 +349,7 @@ export default function Dashboard() {
                                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
                                       />
                                       <span className="tc-sub">{task.sub}</span>
-                                      <button className="tc-del" onClick={() => deleteTask(task.id)} title="Delete task">🗑</button>
+                                      <button className="tc-del" onClick={() => deleteTask(task.id)} title="Delete task" aria-label={`Delete task ${task.name}`}>🗑</button>
                                     </div>
                                     <div className="tc-checklist">
                                       {task.checklist.map((item) => (
@@ -342,7 +358,7 @@ export default function Dashboard() {
                                             <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                           </div>
                                           <span className={`cl-txt ${item.checked ? 'done' : ''}`}>{item.text}</span>
-                                          <button className="cl-del-btn" onClick={e => { e.stopPropagation(); deleteClItem(task.id, item.id); }}>&#10005;</button>
+                                          <button className="cl-del-btn" onClick={e => { e.stopPropagation(); deleteClItem(task.id, item.id); }} aria-label={`Remove checklist step ${item.text}`}>&#10005;</button>
                                         </div>
                                       ))}
                                       <ChecklistAddRow taskId={task.id} onAdd={addClItem} />
@@ -399,7 +415,7 @@ export default function Dashboard() {
               <div className="modal-title">New Task</div>
               <div className="modal-subtitle">ADD TO THE 14-DAY EXECUTION SPRINT</div>
             </div>
-            <button className="modal-close" onClick={closeModal}>&times;</button>
+            <button className="modal-close" onClick={closeModal} aria-label="Close new task modal">&times;</button>
           </div>
           <div className="form-row">
             <label className="form-lbl">Task Name *</label>
@@ -477,7 +493,7 @@ function ChecklistAddRow({ taskId, onAdd }: { taskId: number; onAdd: (taskId: nu
     <div className="cl-add-row">
       <input className="cl-add-inp" placeholder="＋ Add step…" value={val} onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') submit(); }} />
-      <button className="cl-add-go" onClick={submit}>&#8629;</button>
+      <button className="cl-add-go" onClick={submit} aria-label="Add checklist step">&#8629;</button>
     </div>
   );
 }
