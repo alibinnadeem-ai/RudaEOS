@@ -15,7 +15,10 @@ export async function GET() {
       GROUP BY t.id
       ORDER BY t.id
     `;
-    return NextResponse.json({ categories, tasks });
+    return NextResponse.json({
+      categories,
+      tasks: tasks.map((t: any) => ({ ...t, checklist: t.checklist || [] })),
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

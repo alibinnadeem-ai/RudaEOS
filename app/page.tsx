@@ -55,7 +55,7 @@ export default function Dashboard() {
     const res = await fetch('/api/tasks');
     const data = await res.json();
     setCategories(data.categories || []);
-    setTasks(data.tasks || []);
+    setTasks((data.tasks || []).map((t: any) => ({ ...t, checklist: t.checklist || [] })));
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
